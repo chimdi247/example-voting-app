@@ -1,0 +1,55 @@
+# Docker
+# Build and push an image to Azure Container Registry
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+ paths:
+   include:
+     - worker/*
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'e890435b-49fc-45d1-bbfd-c5eec15c2795'
+  imageRepository: 'workerapp'
+  containerRegistry: 'chimdi.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/worker/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+  # Agent VM Runner image name
+pool:
+ name: 'azureagent'
+
+stages:
+- stage: Build
+  displayName: Build the image
+  jobs:
+  - job: Build
+    displayName: Build the docker image
+  
+    steps:
+    - task: Docker@2
+      displayName: Build the docker image
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'build'
+        Dockerfile: 'worker/Dockerfile'
+        tags: '$(tag)'
+
+- stage: Push
+  displayName: Push the image
+  jobs:
+  - job: Push
+    displayName: Push the image
+  
+    steps:
+    - task: Docker@2
+      displayName: Push the image to container registery
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'push'
+        tags: '$(tag)'
