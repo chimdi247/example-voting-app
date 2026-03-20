@@ -63,9 +63,9 @@ stages:
     - script: |
        sudo apt-get update -y
        sudo apt-get install dos2unix -y
-       dos2unix 'updateK8sManifests.sh'
+       dos2unix 'scripts/updateK8sManifests.sh'
       displayName: 'Install pkgs'
     - task: ShellScript@2
       inputs:
-        scriptPath: 'updateK8sManifests.sh'
+        scriptPath: 'scripts/updateK8sManifests.sh'
         args: 'vote $(imageRepository) $(tag)'
