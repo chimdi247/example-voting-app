@@ -1,4 +1,1 @@
-az aks update \
-  --name <aks-cluster-name> \
-  --resource-group <resource-group> \
-  --attach-acr chimdi
+az aks update --name <aks-cluster-name> --resource-group <resource-group>  --attach-acr <acr-name>
