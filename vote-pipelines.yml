@@ -1,0 +1,71 @@
+# Docker
+# Build and push an image to Azure Container Registry
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+ paths:
+   include:
+     - vote/*
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'aa9c384d-4245-4836-a050-f08ff0e52402'
+  imageRepository: 'votingapp'
+  containerRegistry: 'chimdi.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/vote/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+  # Agent VM Runner image name
+pool:
+ name: azureagent
+
+stages:
+- stage: Build
+  displayName: Build the image
+  jobs:
+  - job: Build
+    displayName: Build the image
+  
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'build'
+        Dockerfile: 'vote/Dockerfile'
+        tags: '$(tag)'
+
+- stage: Push
+  displayName: Push the image
+  jobs:
+  - job: Build
+    displayName: Push the image
+  
+    steps:
+    - task: Docker@2
+      displayName: Push an image to container registry
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'push'
+        tags: '$(tag)'
+
+- stage: Update
+  displayName: Update 
+  jobs:
+  - job: Update
+    displayName: Update
+    steps:
+    - script: |
+       sudo apt-get update -y
+       sudo apt-get install dos2unix -y
+       dos2unix 'updateK8sManifests.sh'
+      displayName: 'Install pkgs'
+    - task: ShellScript@2
+      inputs:
+        scriptPath: 'updateK8sManifests.sh'
+        args: 'vote $(imageRepository) $(tag)'
